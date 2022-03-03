@@ -55,7 +55,12 @@ def desnse_crf(prob, embedding, itern=15, compat=2.0, visn=0):  # reutrn new_nxk
     dcrf = pydensecrf.densecrf.DenseCRF(prob.shape[0], prob.shape[-1])
     unary_energy = -np.log(np.ascontiguousarray(prob.T).clip(1e-5, 1))
     dcrf.setUnaryEnergy(unary_energy)
-    dcrf.addPairwiseEnergy(np.ascontiguousarray(embedding.T), compat=compat)
+    dcrf.addPairwiseEnergy(
+        np.ascontiguousarray(embedding.T),
+        compat=compat,
+        normalization=pydensecrf.densecrf.NORMALIZE_SYMMETRIC,
+        kernel=pydensecrf.densecrf.DIAG_KERNEL,
+    )
 
     Q, tmp1, tmp2 = dcrf.startInference()
     for idx in range(itern):
@@ -73,7 +78,11 @@ def desnse_crf(prob, embedding, itern=15, compat=2.0, visn=0):  # reutrn new_nxk
 
 
 if __name__ == "__main__":
-    H, W, NLABELS = 40, 30, 2
+    from boxx import *
+
+    H, W, NLABELS = 55, 40, 2
+    # H, W = np.int32(np.array([H, W]) * 1.3)
+    print("H, W, H*W:", H, W, H * W)
     to_2d = lambda x, hw=(H, W): x.T.reshape(-1, *hw)
     to_1d = lambda x: x.reshape(x.shape[0], -1).T
 
@@ -89,9 +98,10 @@ if __name__ == "__main__":
 
     print("带有噪音的 feature 可视化")
     boxx.show(feat2d[1], feat2d.argmax(0))
+
     if "spectral_clustering" and 10:
         embedding = np.concatenate((embedding_pos, feat), -1)
-        # affinity = embedding_to_affinity(embedding, "none_linear")
+
         affinity = ((embedding_pos[None] - embedding_pos[:, None]) ** 2).sum(-1) ** 0.5
         affinity += ((feat[None] - feat[:, None]) ** 2).sum(-1) ** 0.5 * 2
         affinity = norma(-affinity)
@@ -102,8 +112,7 @@ if __name__ == "__main__":
         boxx.show(cluster_idx2d)
 
     if "desnse_crf" and 10:
-        embedding = np.concatenate((embedding_pos ** 3, feat * 0), -1)
-        # embedding = np.concatenate((embedding_pos * 10, feat * 0), -1)
+        embedding = embedding_pos
         prob = softmax(feat)
         new_prob = desnse_crf(prob, embedding, itern=15, visn=0)
         new_prob2d = to_2d(new_prob)

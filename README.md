@@ -9,14 +9,16 @@ Example code for graph optimization
 pip install -U cython
 pip install git+https://github.com/lucasb-eyer/pydensecrf.git
 
+# install sklearn
+pip install scikit-learn pyamg
+
+# run example
 git clone https://github.com/DIYer22/graph_optimization.git
-cd graph_optimization/
+cd graph_optimization/graph_optimization
+python main.py
 
 # install DIYer22/graph_optimization
-pip install .
-
-graph_optimization/graph_optimization
-python main.py
+pip install ..
 ```
 
 ## Refrence
