@@ -1,5 +1,5 @@
 __version__ = "0.0.1"
-__description__ = "graph_optimization"
+__description__ = "graph_optimization: Example code for graph optimization"
 __license__ = "MIT"
 __author__ = "DIYer22"
 __author_email__ = "ylxx@live.com"
