@@ -2,6 +2,7 @@
 Example code for graph optimization
 - Example of `sklearn.cluster.SpectralClustering`
 - Example of denseCRF
+- sparse weighted graph conv to blur node feature
 
 ## Run examples
 ```bash
