@@ -22,7 +22,7 @@ python main.py
 pip install ..
 ```
 
-## Refrence
+## References
 - [lucasb-eyer/pydensecrf](https://github.com/lucasb-eyer/pydensecrf/blob/master/examples/Non%20RGB%20Example.ipynb)
 - [iseg.affinity.normalized_cut](https://github.com/DIYer22/iseg)
 - [ Overview of clustering methods - sklearn doc](https://scikit-learn.org/stable/modules/clustering.html)  
