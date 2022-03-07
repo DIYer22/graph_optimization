@@ -192,7 +192,7 @@ def graph_conv_by_affinity(feat, affinity, momenta=0.6, order=1, itern=10, visn=
 
 def test_graph_conv_complexity():
     N = 200000
-    K = 100
+    K = 200
     C = 90
     data = np.random.rand(N * K).astype(np.float32)
     row = np.linspace(0, N - 0.1, N * K).astype(np.int32)
