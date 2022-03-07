@@ -158,14 +158,30 @@ def graph_conv_by_affinity(feat, affinity, momenta=0.6, order=1, itern=10, visn=
     col_idx_to_compact_shape = -np.ones_like(compact, np.int32)
     col_idx_to_compact_shape[row, compact_col_idx] = col
 
-    feat_in_compact_shape = feat[col_idx_to_compact_shape]
     new_feat = feat.copy()
-
     for idx in range(itern):
-        compact[row, compact_col_idx] = data
-        weight = compact / compact.sum(-1, keepdims=True)
-        aggregation = (weight[..., None] * feat_in_compact_shape).sum(-2)
-        new_feat = new_feat * momenta + aggregation * (1 - momenta)
+        # compute by batchs for save memory
+        batch = 200000 * 20 * 90 // compact_n // feat.shape[-1]
+        new_feat_ = new_feat.copy()
+        for batch_idx in tqdm(range(int(np.ceil(affinity.shape[0] / batch)))):
+            slice_on_row = boxx.sliceInt[batch_idx * batch : batch_idx * batch + batch]
+            # feat_ = feat[slicee]
+            slice_on_coo = (batch_idx * batch <= row) & (
+                row < batch_idx * batch + batch
+            )
+            col_idx_to_compact_shape_ = col_idx_to_compact_shape[slice_on_row]
+            feat_in_compact_shape_ = feat[col_idx_to_compact_shape_]
+
+            compact[row[slice_on_coo], compact_col_idx[slice_on_coo]] = data[
+                slice_on_coo
+            ]
+            compact_ = compact[slice_on_row]
+            weight = compact_ / compact_.sum(-1, keepdims=True)
+            aggregation = (weight[..., None] * feat_in_compact_shape_).sum(-2)
+            new_feat_[slice_on_row] = new_feat[slice_on_row] * momenta + aggregation * (
+                1 - momenta
+            )
+        new_feat = new_feat_
 
         if __name__ == "__main__" and visn and not idx % (itern // visn):
             new_feat2d = to_2d(new_feat)
@@ -175,8 +191,8 @@ def graph_conv_by_affinity(feat, affinity, momenta=0.6, order=1, itern=10, visn=
 
 
 def test_graph_conv_complexity():
-    N = 20000
-    K = 15
+    N = 200000
+    K = 100
     C = 90
     data = np.random.rand(N * K).astype(np.float32)
     row = np.linspace(0, N - 0.1, N * K).astype(np.int32)
@@ -185,7 +201,7 @@ def test_graph_conv_complexity():
     feat = np.linspace(0, 1, N)[:, None].astype(np.float32)
     feat = np.concatenate([feat] * C, -1)
     new_feat = graph_conv_by_affinity(
-        feat, affinity, momenta=0.5, order=2, itern=1, visn=0,
+        feat, affinity, momenta=0.5, order=1, itern=1, visn=0,
     )
     boxx.loga(feat)
     boxx.loga(new_feat)
@@ -195,7 +211,7 @@ def test_graph_conv_complexity():
 if __name__ == "__main__":
     from boxx import *
 
-    # test_graph_conv_complexity() 1 / 0
+    # test_graph_conv_complexity(); 1 / 0
 
     H, W, NLABELS = 55, 40, 2
     # H, W = np.int32(np.array([H, W]) * 1.3)
