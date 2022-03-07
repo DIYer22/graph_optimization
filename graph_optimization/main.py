@@ -5,6 +5,7 @@ from boxx import np
 
 import scipy
 import sklearn.cluster
+from tqdm import tqdm
 
 
 def norma(feat):
@@ -118,8 +119,9 @@ def graph_conv_by_affinity(feat, affinity, momenta=0.6, order=1, itern=10, visn=
         row_to_cd = np.array([None] * affinity.shape[0])
         unique_row, (split_col, split_data) = np_group_by(row, [col, data])
         # (n, [col(neighbor*int), data(neighbor*float)])
-        row_to_cd[unique_row] = (np.array([split_col, split_data]).T).tolist()
-
+        _cds = np.zeros((affinity.shape[0],), dtype=object)
+        _cds[:] = list(zip(split_col, split_data))
+        row_to_cd[unique_row] = _cds
         order_rate = 1
         for row_idx, (direct_col, direct_data) in enumerate(row_to_cd):
             indirect_cds = row_to_cd[direct_col]
@@ -133,10 +135,9 @@ def graph_conv_by_affinity(feat, affinity, momenta=0.6, order=1, itern=10, visn=
                     )
                 )
 
-        indirect_rcds_ = np.array(indirect_rcds)
-        indirect_row = np.concatenate((indirect_rcds_[:, 0]))
-        indirect_col = np.concatenate((indirect_rcds_[:, 1]))
-        indirect_data = np.concatenate((indirect_rcds_[:, 2]))
+        indirect_row = np.concatenate([rcd[0] for rcd in indirect_rcds])
+        indirect_col = np.concatenate([rcd[1] for rcd in indirect_rcds])
+        indirect_data = np.concatenate([rcd[2] for rcd in indirect_rcds])
 
         row = np.append(row, indirect_row)
         col = np.append(col, indirect_col)
@@ -173,8 +174,28 @@ def graph_conv_by_affinity(feat, affinity, momenta=0.6, order=1, itern=10, visn=
     return new_feat
 
 
+def test_graph_conv_complexity():
+    N = 20000
+    K = 15
+    C = 90
+    data = np.random.rand(N * K).astype(np.float32)
+    row = np.linspace(0, N - 0.1, N * K).astype(np.int32)
+    col = np.random.randint(0, N, (N * K))
+    affinity = scipy.sparse.coo_matrix((data, (row, col)), shape=(N, N))
+    feat = np.linspace(0, 1, N)[:, None].astype(np.float32)
+    feat = np.concatenate([feat] * C, -1)
+    new_feat = graph_conv_by_affinity(
+        feat, affinity, momenta=0.5, order=2, itern=1, visn=0,
+    )
+    boxx.loga(feat)
+    boxx.loga(new_feat)
+    boxx.mg()
+
+
 if __name__ == "__main__":
     from boxx import *
+
+    # test_graph_conv_complexity() 1 / 0
 
     H, W, NLABELS = 55, 40, 2
     # H, W = np.int32(np.array([H, W]) * 1.3)
