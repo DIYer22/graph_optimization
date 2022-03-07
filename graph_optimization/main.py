@@ -170,7 +170,7 @@ def graph_conv_by_affinity(feat, affinity, momenta=0.6, order=1, itern=10, visn=
                 row < batch_idx * batch + batch
             )
             col_idx_to_compact_shape_ = col_idx_to_compact_shape[slice_on_row]
-            feat_in_compact_shape_ = feat[col_idx_to_compact_shape_]
+            feat_in_compact_shape_ = new_feat[col_idx_to_compact_shape_]
 
             compact[row[slice_on_coo], compact_col_idx[slice_on_coo]] = data[
                 slice_on_coo
